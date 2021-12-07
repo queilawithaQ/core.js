@@ -1,41 +1,43 @@
 import { Octokit } from "../src";
 
-const pluginFoo = () => {
-  return { foo: "bar" };
-};
-const pluginBaz = () => {
-  return { baz: "daz" };
-};
-const pluginQaz = () => {
-  return { qaz: "naz" };
-};
-
 describe("Octokit.plugin()", () => {
   it("gets called in constructor", () => {
-    const MyOctokit = Octokit.plugin(pluginFoo);
+    const MyOctokit = Octokit.plugin(octokit => {
+      octokit.foo = "bar";
+    });
     const myClient = new MyOctokit();
     expect(myClient.foo).toEqual("bar");
   });
 
-  it("supports multiple plugins", () => {
-    const MyOctokit = Octokit.plugin(pluginFoo, pluginBaz, pluginQaz);
+  it("supports array of plugins", () => {
+    const MyOctokit = Octokit.plugin([
+      octokit => {
+        octokit.foo = "bar";
+      },
+      octokit => {
+        octokit.baz = "daz";
+      }
+    ]);
     const myClient = new MyOctokit();
     expect(myClient.foo).toEqual("bar");
     expect(myClient.baz).toEqual("daz");
-    expect(myClient.qaz).toEqual("naz");
   });
+
   it("does not override plugins of original constructor", () => {
-    const MyOctokit = Octokit.plugin(pluginFoo);
+    const MyOctokit = Octokit.plugin(octokit => {
+      octokit.foo = "bar";
+    });
     const myClient = new MyOctokit();
     expect(myClient.foo).toEqual("bar");
+
     const octokit = new Octokit();
-    expect(octokit).not.toHaveProperty("foo");
+    expect(octokit.foo).toEqual(undefined);
   });
 
   it("receives client options", () => {
     const MyOctokit = Octokit.plugin((octokit, options) => {
       expect(options).toStrictEqual({
-        foo: "bar",
+        foo: "bar"
       });
     });
     new MyOctokit({ foo: "bar" });
@@ -43,26 +45,13 @@ describe("Octokit.plugin()", () => {
 
   it("does not load the same plugin more than once", () => {
     const myPlugin = (octokit: Octokit) => {
-      if ("customKey" in octokit) {
+      if (octokit.customKey) {
         throw new Error("Boom!");
+      } else {
+        octokit.customKey = true;
       }
-
-      return {
-        customKey: true,
-      };
     };
     const MyOctokit = Octokit.plugin(myPlugin).plugin(myPlugin);
     expect(() => new MyOctokit()).not.toThrow();
-  });
-
-  it("supports chaining", () => {
-    const MyOctokit = Octokit.plugin(pluginFoo)
-      .plugin(pluginBaz)
-      .plugin(pluginQaz);
-
-    const myClient = new MyOctokit();
-    expect(myClient.foo).toEqual("bar");
-    expect(myClient.baz).toEqual("daz");
-    expect(myClient.qaz).toEqual("naz");
   });
 });

@@ -1,8 +1,8 @@
-import { Core } from "../src";
+import { Octokit } from "../src";
 
 describe("Smoke test", () => {
   it("is a function", () => {
-    expect(Core).toBeInstanceOf(Function);
-    expect(Core).not.toThrow();
+    expect(Octokit).toBeInstanceOf(Function);
+    expect(() => new Octokit()).not.toThrow();
   });
 });

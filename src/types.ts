@@ -1,24 +1,14 @@
 import { Agent } from "http";
 
-import { request as Request } from "@octokit/request";
 import { Octokit } from ".";
 
 export type OctokitOptions = {
-  auth?: string | AutenticationHook;
+  auth?: string;
   request?: OctokitRequestOptions;
   [option: string]: any;
 };
 
-interface AutenticationHook {
-  (options?: any): any;
-
-  hook: (
-    request: typeof Request,
-    options: Endpoint
-  ) => ReturnType<typeof Request>;
-}
-
-export type Plugin = (octokit: Octokit, options: OctokitOptions) => void;
+export type Plugin = (octokit: Octokit, options?: OctokitOptions) => void;
 
 // TODO: deduplicate
 
@@ -68,21 +58,6 @@ export type Parameters = {
    * 4. JSON in the request body in the form of `body[parameter]` unless `parameter` key is `'data'`
    */
   [parameter: string]: any;
-};
-
-/**
- * Relative or absolute URL. Examples: `'/orgs/:org'`, `https://example.com/foo/bar`
- */
-export type Url = string;
-
-/**
- * Request method
- */
-export type Method = "DELETE" | "GET" | "HEAD" | "PATCH" | "POST" | "PUT";
-
-export type Endpoint = Parameters & {
-  method: Method;
-  url: Url;
 };
 
 export type RequestHeaders = {

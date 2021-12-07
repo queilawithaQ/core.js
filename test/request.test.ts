@@ -1,4 +1,4 @@
-import { getUserAgent } from "universal-user-agent";
+import getUserAgent from "universal-user-agent";
 import fetchMock from "fetch-mock";
 
 import { Octokit } from "../src";
@@ -18,18 +18,20 @@ describe("octokit.request()", () => {
       {
         headers: {
           accept: "application/vnd.github.v3+json",
-          "user-agent": userAgent,
-        },
+          "user-agent": userAgent
+        }
       }
     );
 
     const octokit = new Octokit({
       request: {
-        fetch: mock,
-      },
+        fetch: mock
+      }
     });
 
-    return octokit.request("GET /");
+    return octokit.request("GET /").then(response => {
+      expect(response.data).toStrictEqual({ ok: true });
+    });
   });
 
   it("custom baseUrl", () => {
@@ -40,12 +42,12 @@ describe("octokit.request()", () => {
     const octokit = new Octokit({
       baseUrl: "https://github.acme-inc.com/api/v3",
       request: {
-        fetch: mock,
-      },
+        fetch: mock
+      }
     });
 
-    return octokit.request("GET /orgs/{org}", {
-      org: "octokit",
+    return octokit.request("GET /orgs/:org", {
+      org: "octokit"
     });
   });
 
@@ -56,42 +58,21 @@ describe("octokit.request()", () => {
       {
         headers: {
           accept: "application/vnd.github.v3+json",
-          "user-agent": `myApp/1.2.3 ${userAgent}`,
-        },
+          "user-agent": `myApp/1.2.3 ${userAgent}`
+        }
       }
     );
 
     const octokit = new Octokit({
       userAgent: "myApp/1.2.3",
       request: {
-        fetch: mock,
-      },
-    });
-
-    return octokit.request("GET /");
-  });
-
-  it("custom time zone", () => {
-    const mock = fetchMock.sandbox().getOnce(
-      "https://api.github.com/",
-      { ok: true },
-      {
-        headers: {
-          accept: "application/vnd.github.v3+json",
-          "user-agent": userAgent,
-          "time-zone": "Europe/Amsterdam",
-        },
+        fetch: mock
       }
-    );
-
-    const octokit = new Octokit({
-      timeZone: "Europe/Amsterdam",
-      request: {
-        fetch: mock,
-      },
     });
 
-    return octokit.request("GET /");
+    return octokit.request("GET /").then(response => {
+      expect(response.data).toStrictEqual({ ok: true });
+    });
   });
 
   it("previews", async () => {
@@ -104,8 +85,8 @@ describe("octokit.request()", () => {
           headers: {
             accept:
               "application/vnd.github.foo-preview+json,application/vnd.github.bar-preview+json",
-            "user-agent": userAgent,
-          },
+            "user-agent": userAgent
+          }
         }
       )
       .getOnce(
@@ -115,25 +96,25 @@ describe("octokit.request()", () => {
           headers: {
             accept:
               "application/vnd.github.foo-preview.raw,application/vnd.github.bar-preview.raw,application/vnd.github.baz-preview.raw",
-            "user-agent": userAgent,
+            "user-agent": userAgent
           },
-          overwriteRoutes: false,
+          overwriteRoutes: false
         }
       );
 
     const octokit = new Octokit({
       previews: ["foo", "bar-preview"],
       request: {
-        fetch: mock,
-      },
+        fetch: mock
+      }
     });
 
     await octokit.request("/");
     await octokit.request("/", {
       mediaType: {
         previews: ["bar", "baz-preview"],
-        format: "raw",
-      },
+        format: "raw"
+      }
     });
   });
 
@@ -143,44 +124,15 @@ describe("octokit.request()", () => {
 
     expect(requestOptions).toStrictEqual({
       method: "GET",
-      // @ts-ignore
       url: "https://api.github.com/",
       headers: {
         accept: "application/vnd.github.v3+json",
-        "user-agent": userAgent,
+        "user-agent": userAgent
       },
       request: {
         // @ts-ignore
-        hook: requestOptions.request.hook,
-      },
-    });
-  });
-
-  it("sends null values (octokit/rest.js#765)", () => {
-    const mock = fetchMock.sandbox().patchOnce(
-      "https://api.github.com/repos/epmatsw/example-repo/issues/1",
-      {},
-      {
-        body: {
-          milestone: null,
-        },
+        hook: requestOptions.request.hook
       }
-    );
-
-    const octokit = new Octokit({
-      auth: "secret123",
-      request: {
-        fetch: mock,
-      },
     });
-    return octokit.request(
-      "PATCH /repos/{owner}/{repo}/issues/{issue_number}",
-      {
-        owner: "epmatsw",
-        repo: "example-repo",
-        milestone: null,
-        issue_number: 1,
-      }
-    );
   });
 });
